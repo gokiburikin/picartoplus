@@ -2,7 +2,7 @@
 // @name        picarto+
 // @namespace   https://picarto.tv/*
 // @include     https://picarto.tv/*
-// @description Improvements to Google Hangouts
+// @description Improvements to Picarto
 // @version     0.0.1
 // @grant       none
 // @require     http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js
