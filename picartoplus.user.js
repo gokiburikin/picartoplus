@@ -5,9 +5,7 @@
 // @description Improvements to Picarto
 // @version     0.0.1
 // @grant       none
-// @require     http://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js
-// @require     https://raw.githubusercontent.com/hazzik/livequery/master/dist/jquery.livequery.min.js
-// @downloadURL https://raw.githubusercontent.com/gokiburikin/hangoutsplus/master/hangoutsplus.user.js
+// @downloadURL https://github.com/gokiburikin/picartoplus/raw/master/picartoplus.user.js
 // ==/UserScript==
 // TODO: Just run the command when clicking sound buttons
 
@@ -75,9 +73,8 @@ function loadPreferences()
 		}
 		else
 		{
-			hangoutsPlus.currentVersion = "0.0.0";
+			picartoPlus.currentVersion = "0.0.0";
 		}
-		addSystemMessage('[picarto+]:' + results);
 	}
 	catch (exception)
 	{
@@ -95,7 +92,7 @@ function clearPreferences()
 
 function migrate(currentVersion, scriptVersion)
 {
-	addSystemMessage('[picarto+]: No migration.');
+	addSystemMessage('No migration.');
 }
 
 // Test if localstorage is available
@@ -118,25 +115,43 @@ function localStorageTest()
 // Returns a new element that replicates the hangouts system message
 function newChatLineSystemMessage(message)
 {
-	var outerDiv = document.createElement('div');
-	var middleDiv = document.createElement('div');
-	var innerDiv = document.createElement('div');
-	outerDiv.className = ' Fm Eq Kc-we';
-	middleDiv.className = 'Kc-Oc';
-	innerDiv.className = 'Kc-Ca Fm';
-	innerDiv.innerHTML = message;
-	middleDiv.appendChild(innerDiv);
-	outerDiv.appendChild(middleDiv);
-	return outerDiv;
+	var listEntry = document.createElement('li');
+	listEntry.className = "messageli um-picarto+";
+	listEntry.style.display = "list-item";
+
+	var infoContent = document.createElement("div");
+	infoContent.className = "infoContent";
+	infoContent.style.backgroundColor = "#09F";
+
+	var usernameSpan = document.createElement("span");
+	usernameSpan.className = "msgUsername";
+	usernameSpan.style.color = "#FFF";
+	usernameSpan.title = "The plugin cannot be whispered.";
+
+	var usernameSpanContent = document.createTextNode("picarto+");
+
+	var messageSpan = document.createElement("span");
+	messageSpan.className = "theMsg usermsg";
+
+	var messageSpanContent = document.createTextNode(message);
+
+	messageSpan.appendChild(messageSpanContent);
+	usernameSpan.appendChild(usernameSpanContent);
+	infoContent.appendChild(usernameSpan);
+	infoContent.appendChild(messageSpan);
+	listEntry.appendChild(infoContent);
+	return listEntry;
 }
 
 // Used to add false system messages to the chat area
 function addSystemMessage(message)
 {
 	var div = newChatLineSystemMessage(message);
-	if (hangoutsPlus.chat)
+	if (picartoPlus.chat)
 	{
-		hangoutsPlus.chat.appendChild(div);
+		var messageList = document.querySelector('#msgs');
+		console.log(messageList);
+		messageList.appendChild(div);
 		scrollChatToBottom();
 	}
 	return div;
@@ -295,7 +310,7 @@ function performCommand(command)
 		];
 		for (var i = 0; i < commands.length; i++)
 		{
-			addSystemMessage('[picarto+]: !' + commands[i]);
+			addSystemMessage('!' + commands[i]);
 		}
 	}
 	// Scrolling Fix command
@@ -310,7 +325,7 @@ function performCommand(command)
 	}
 	else
 	{
-		addSystemMessage('[picarto+]: Invalid command.');
+		addSystemMessage('Invalid command.');
 	}
 	savePreferences();
 }
@@ -320,22 +335,22 @@ function simpleToggleCommand(command, variable, messages)
 	if (command[1] === 'on')
 	{
 		picartoPlus[variable] = true;
-		addSystemMessage("[picarto+]: " + messages[0]);
+		addSystemMessage(messages[0]);
 	}
 	else if (command[1] === 'off')
 	{
 		picartoPlus[variable] = false;
-		addSystemMessage("[picarto+]: " + messages[1]);
+		addSystemMessage(messages[1]);
 	}
 	else
 	{
 		if (picartoPlus[variable] == true)
 		{
-			addSystemMessage("[picarto+]: " + messages[2]);
+			addSystemMessage(messages[2]);
 		}
 		else
 		{
-			addSystemMessage("[picarto+]: " + messages[3]);
+			addSystemMessage(messages[3]);
 		}
 	}
 }
@@ -361,7 +376,7 @@ var picartoObserver = new MutationObserver(function (mutations)
 	// Chat initialization
 	if (!picartoPlus.chatInit)
 	{
-		picartoPlus.chat = document.querySelector('.chatContainer');
+		picartoPlus.chat = document.querySelector('#chatContainer');
 		if (picartoPlus.chat && chatObserver)
 		{
 			chatObserver.observe(picartoPlus.chat,
@@ -397,6 +412,31 @@ var picartoObserver = new MutationObserver(function (mutations)
 		picartoPlus.textArea = document.querySelector('.input');
 		if (picartoPlus.textArea)
 		{
+			$(picartoPlus.textArea)[0].addEventListener('keydown', function (event)
+			{
+				if (event.shiftKey)
+				{
+					if (event.which == 13)
+					{
+						picartoPlus.textArea.value = picartoPlus.textArea.value + "\n";
+						event.useCapture = true;
+						event.preventDefault();
+						event.stopPropagation();
+						return false;
+					}
+				}
+				else if (event.which == 13)
+				{
+					if (picartoPlus.textArea.value[0] === '!')
+					{
+						var command = picartoPlus.textArea.value.split(' ');
+						picartoPlus.textArea.value = '';
+						performCommand(command);
+						return false;
+					}
+				}
+
+			}, true);
 			picartoPlus.textAreaInit = true;
 		}
 	}
@@ -423,7 +463,7 @@ var picartoObserver = new MutationObserver(function (mutations)
 		var audio = new Audio("https://dl.dropboxusercontent.com/u/12577282/cnd/success.wav");
 		audio.play();
 		picartoObserver.disconnect();
-		addSystemMessage('[picarto+]: Plugin initialized. v' + picartoPlus.scriptVersion + '. Type !? for a list of commands.');
+		addSystemMessage('Plugin initialized. v' + picartoPlus.scriptVersion + '. Type !? for a list of commands.');
 	}
 });
 initializeVariables();
